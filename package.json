@@ -1,0 +1,40 @@
+{
+  "name": "@steveush/grunt-map-normalizer",
+  "description": "Normalize the sources properties of generated source maps.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Steve Usher",
+    "url": "https://github.com/steveush"
+  },
+  "repository": "https://github.com/steveush/grunt-map-normalizer",
+  "bugs": "https://github.com/steveush/grunt-map-normalizer/issues",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12"
+  },
+  "main": "tasks/map-normalizer.js",
+  "scripts": {
+    "test": "jest ./test",
+    "test-build": "grunt --verbose"
+  },
+  "files": [
+    "tasks"
+  ],
+  "dependencies": {
+    "chalk": "^4.1.2"
+  },
+  "peerDependencies": {
+    "grunt": "^1.6.1"
+  },
+  "devDependencies": {
+    "grunt-contrib-concat": "^2.1.0",
+    "grunt-contrib-uglify": "^5.2.2",
+    "jest": "^29.5.0"
+  },
+  "keywords": [
+    "gruntplugin",
+    "normalizer",
+    "map",
+    "sourcemap"
+  ]
+}
