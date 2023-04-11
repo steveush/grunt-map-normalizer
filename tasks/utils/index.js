@@ -4,6 +4,7 @@ const absoluteToRelative = require( "./absoluteToRelative" );
 const absoluteToVirtual = require( "./absoluteToVirtual" );
 const anyToAbsolute = require( "./anyToAbsolute" );
 const commonOfAbsolute = require( "./commonOfAbsolute" );
+const filterSources = require( "./filterSources" );
 const isFn = require( "./isFn" );
 const modifySources = require( "./modifySources" );
 const pruneSources = require( "./pruneSources" );
@@ -27,6 +28,7 @@ module.exports = {
     absoluteToVirtual,
     anyToAbsolute,
     commonOfAbsolute,
+    filterSources,
     isFn,
     modifySources,
     pruneSources,

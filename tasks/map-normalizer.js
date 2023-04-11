@@ -8,7 +8,8 @@ const {
     absoluteToFileUri,
     absoluteToVirtual,
     isFn,
-    modifySources
+    modifySources,
+    filterSources
 } = require( "./utils" );
 
 //region type-definitions
@@ -19,7 +20,8 @@ const {
  * @property {string} [output="relative"] - One of the following: "absolute", "relative", "file", "virtual"
  * @property {boolean} [verify=true] - Whether to verify the source files exist.
  * @property {string} [virtualRoot="mapped"] - When `type` is "virtual" this provides the new root path for all sources.
- * @property {modifySources~callback} [callback] - A function to modify each source path.
+ * @property {filterSources~callback} [filter] - A function to filter the sources.
+ * @property {modifySources~callback} [modify] - A function to modify the sources.
  */
 
 //endregion
@@ -32,37 +34,44 @@ module.exports = function( grunt ) {
             output: 'relative',
             verify: true,
             virtualRoot: null,
-            callback: null
+            filter: null,
+            modify: null
         } );
 
         const results = { success: [], fail: [] };
-        this.filesSrc.forEach( ( map_src ) => {
+        this.filesSrc.forEach( ( filepath ) => {
 
+            const map_src = path.resolve( filepath );
+            const map_dir = path.dirname( map_src );
             const result = { file: map_src, options, removed: [], err: null };
             try {
-                const map = grunt.file.readJSON( map_src );
 
-                grunt.verbose.write( `Normalizing ${ map_src }` );
-                const map_dir = path.dirname( map_src );
+                grunt.verbose.ok( `Normalizing ${ chalk.cyan( map_src ) }` );
+
+                const map = grunt.file.readJSON( map_src );
 
                 // first convert the sources to absolute paths
                 map.sources = anyToAbsolute( map.sources, map_dir );
 
-                grunt.verbose.write( '.' );
-
                 if ( options.verify ) {
                     const missing = absoluteIsMissing( map.sources );
                     pruneSources( map, missing ).forEach( ( src ) => {
-                        grunt.verbose.ok( `Removed ${ src }` );
+                        grunt.verbose.writeln( `Missing source ${ chalk.red( src ) }` );
                         result.removed.push( src );
                     } );
                 }
 
-                grunt.verbose.write( '.' );
+                if ( isFn( options.filter ) ){
+                    const filtered = filterSources( map, options.filter );
+                    pruneSources( map, filtered ).forEach( ( src ) => {
+                        grunt.verbose.writeln( `Removed source ${ chalk.yellow( src ) }` );
+                        result.removed.push( src );
+                    } );
+                }
 
                 switch ( options.output ) {
                     case "relative":
-                        map.sources = absoluteToRelative( map.sources, map_src );
+                        map.sources = absoluteToRelative( map.sources, map_dir );
                         break;
                     case "file":
                         map.sources = absoluteToFileUri( map.sources );
@@ -73,20 +82,19 @@ module.exports = function( grunt ) {
                         break;
                 }
 
-                grunt.verbose.write( '.' );
-
-                if ( isFn( options.callback ) ) {
-                    const remove = modifySources( map, options.callback );
-                    pruneSources( map, remove ).forEach( ( src ) => {
-                        grunt.verbose.ok( `Removed ${ src }` );
+                if ( isFn( options.modify ) ) {
+                    const { changed, filtered } = modifySources( map, options.modify );
+                    changed.forEach( ( change ) => {
+                        grunt.verbose.writeln( `Changed source ${ chalk.yellow( change.from ) } to ${ chalk.yellow( change.to ) }` );
+                    } );
+                    pruneSources( map, filtered ).forEach( ( src ) => {
+                        grunt.verbose.writeln( `Removed source ${ chalk.yellow( src ) }` );
                         result.removed.push( src );
                     } );
                 }
 
-                grunt.verbose.writeln( chalk.green( 'OK' ) );
-
                 grunt.file.write( map_src, JSON.stringify( map ) );
-                grunt.verbose.writeln( `File ${ chalk.cyan( map_src ) } normalized (${ options.output }).` );
+                grunt.verbose.writeln( `File ${ chalk.cyan( map_src ) } normalized (${ chalk.cyan( options.output ) }).` );
                 results.success.push( result );
 
             } catch ( err ) {

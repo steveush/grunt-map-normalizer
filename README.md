@@ -53,12 +53,19 @@ Default: `true`
 
 Whether the sources should be verified. All non-existing files are removed from the final output.
 
-#### callback
+#### filter
 
-Type: `Function`  
+Type: `Function( String [, SourceMap ] ):Boolean`  
+Default: `null`
+
+A callback function used to filter the sources before being normalized. If `false` is returned from this function then the source and its corresponding content will be removed.
+
+#### modify
+
+Type: `Function( String [, SourceMap ] ):String|False`  
 Default: `null`  
 
-A function that can be used to modify the normalized sources before the output is written.
+A callback function used to modify the normalized sources before the output is written. If `false` is returned from this function then the source and its corresponding content will be removed.
 
 ### Usage Examples
 
@@ -123,6 +130,41 @@ A function that can be used to modify the normalized sources before the output i
 // sources: [ "file:///C:/project/src/one.js", "file:///C:/project/src/child/two.js" ] => [ "Custom/one.js", "Custom/child/two.js" ]
 ```
 
+#### Filter any sources before normalization.
+
+```js
+"map-normalizer": {
+    options: {
+        output: "relative",
+            filter: ( src ) => !src.endsWith( "two.js" )
+    },
+    src: [ 'assets/*.map' ]
+}
+// map: "C:\\project\assets\example.js.map"
+// sources: [ "../src/one.js", "../src/two.js", "../src/child/three.js" ] => [ "../src/one.js", "../src/child/three.js" ]
+// sources: [ "C:\\project\src\one.js", "C:\\project\src\two.js", "C:\\project\src\child\three.js" ] => [ "../src/one.js", "../src/child/three.js" ]
+// sources: [ "file:///C:/project/src/one.js", "file:///C:/project/src/two.js", "file:///C:/project/src/child/three.js" ] => [ "../src/one.js", "../src/child/three.js" ]
+```
+
+#### Modify any sources after normalization.
+
+```js
+"map-normalizer": {
+    options: {
+        output: "relative",
+        modify: ( src ) => {
+            // filter out any sources ending with "two.js"
+            if ( src.endsWith( "two.js" ) ) return false;
+            // replace the normalized sources "../src" segment with "something"
+            return src.replace( "../src", "something" );
+        }
+    },
+    src: [ 'assets/*.map' ]
+}
+// map: "C:\\project\assets\example.js.map"
+// sources: [ "C:\\project\src\one.js", "C:\\project\src\two.js", "C:\\project\src\child\three.js" ] => [ "something/one.js", "something/child/three.js" ]
+```
+
 #### Options can be specified for all `map-normalizer` tasks and for each `map-normalizer:target`.
 
 ##### All Tasks
@@ -153,6 +195,7 @@ A function that can be used to modify the normalized sources before the output i
 
 ## Changelog
 
-| Version | Date        | Notes                             |
-|:-------:|:------------|:----------------------------------|
-| v0.0.1  | 11 Apr 2023 | Initial commit of the repository. |
+| Version | Date        | Notes                                                                                                                                                                                                                |
+|:-------:|:------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| v0.0.1  | 11 Apr 2023 | Initial commit of the repository.                                                                                                                                                                                    |
+| v0.0.2  | 11 Apr 2023 | <ul><li>Renamed the `callback` option to `modify`.</li><li>Added the `filter` option to allow sources to be filtered before being normalized.</li><li>Added better `grunt --verbose` logging for the task.</li></ul> |
