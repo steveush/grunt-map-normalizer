@@ -37,10 +37,28 @@ module.exports = function( grunt ){
                     output: 'relative'
                 },
                 src: [ './test/assets/uglified.js.map' ]
+            },
+            test3: {
+                options: {
+                    output: 'absolute',
+                    filter: ( src ) => !src.endsWith( "three.js" )
+                },
+                src: [ './test/assets/uglified.js.map' ]
+            },
+            test4: {
+                options: {
+                    output: 'virtual',
+                    virtualRoot: 'custom',
+                    modify: ( src ) => {
+                        if ( src.endsWith( "three.js" ) ) return false;
+                        return src.replace( "custom", "project" );
+                    }
+                },
+                src: [ './test/assets/combined.js.map' ]
             }
         }
     } );
 
-    grunt.registerTask( 'default', ['concat:test','uglify:test','map-normalizer'] );
+    grunt.registerTask( 'default', ['concat','uglify','map-normalizer'] );
 
 };
